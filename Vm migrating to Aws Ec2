@@ -1,0 +1,91 @@
+                                    .VMDK --> AWS S3 --> AWS AMI Image-->  EC2
+                              
+                              
+ On - premises
+{
+
+
+  1. Shutdown your vm
+  
+  2. Export the VM into .ovf (open virtulization format), .ova(open virtulization Archive)  
+     # if you export into ovf (Several files will be written separetly)
+     # if you export into ova (Files ill be written into single)
+
+  3. Choose the option (Include all network adapter mac address) if exist
+  
+  4. After exporting successfully we will get filename.vmdk(file) and Upload it to the s3 bucket
+  
+  5. Specify Env variables (bucket=<your bucket name> , vm_image_name=s3_folder_name/your_Exported_file.vmdk)
+
+  6. And download aws cli tool  and Configure with credentials
+  
+  7. Create the Aws Iam Role and policy 
+  
+  # create a file called filename.json and paste the beloe snippet
+  {
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Effect": "Allow",
+         "Principal": { "Service": "vmie.amazonaws.com" },
+         "Action": "sts:AssumeRole",
+         "Condition": {
+            "StringEquals":{
+               "sts:Externalid": "vmimport"
+            }
+         }
+      }
+   ]
+ }
+ 
+ 8. Aws iam create-role --role-name vmimport --assume-role-policy-document "filename.json"
+    
+ 9. Now create the file for metadata called file2.json
+ 
+    # file2.json
+   echo '[
+  {
+    "Description": "Any stuff you want to specify",
+    "Format": "vmdk",
+    "UserBucket": {
+        "S3Bucket": "'${bucket_name}'",
+        "S3Key": "'${vm_image_name}'"
+    }
+}]
+' > file2.json
+
+ # in the above script bucketname and vm_image_name are defined as global variables
+   
+ 9. aws ec2 import-image --description "<any for the image>" --disk-containers "file2.json"
+    # image start importing
+    # expected outcome
+    {
+    "Description": "your description",
+    "ImportTaskId": "import-ami-08142795085",
+    "Progress": "2",
+    "SnapshotDetails": [
+        {
+            "DiskImageSize": 0.0,
+            "Format": "VMDK",
+            "UserBucket": {
+                "S3Bucket": "bucket-name",
+                "S3Key": "se_folder/filename.vmdk"
+            }
+        }
+    ],
+    "Status": "active",
+    "StatusMessage": "pending"
+}
+ 
+ 
+ 10. if you want to check the staus of importing image
+ 
+     # command : aws ec2 describe-import-image-tasks --import-task-ids "import-ami-08142795085"
+
+
+
+
+11. Once you launch the VM, you can login using the same uid/password you used onpremise. 
+    
+    # Hence done with migration hope we are good to go.......
+ }                                    
