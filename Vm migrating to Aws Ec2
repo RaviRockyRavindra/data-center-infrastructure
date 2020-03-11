@@ -38,9 +38,49 @@
    ]
  }
  
- 8. Aws iam create-role --role-name vmimport --assume-role-policy-document "filename.json"
+ 8. Aws iam create-role --role-name vmimport --assume-role-policy-document "file://filename.json"
     
- 9. Now create the file for metadata called file2.json
+    
+    
+  ----------------till here role of vmimport got created lets assign some more stuff policy ----------------------------------------
+ 
+ 9. Create the file name role-policy.json 
+  # {
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Effect":"Allow",
+         "Action":[
+            "s3:GetBucketLocation",
+            "s3:GetObject",
+            "s3:ListBucket" 
+         ],
+         "Resource":[
+            "arn:aws:s3:::'${bucket_name}'",
+            "arn:aws:s3:::'${bucket_name}'/*"
+         ]
+      },
+      {
+         "Effect":"Allow",
+         "Action":[
+            "ec2:ModifySnapshotAttribute",
+            "ec2:CopySnapshot",
+            "ec2:RegisterImage",
+            "ec2:Describe*"
+         ],
+         "Resource":"*"
+      }
+   ]
+}
+ 
+ 
+10 . Attach this policy to role vmimport by firing this command
+     # aws iam put-role-policy --role-name vmimport \
+                        --policy-name vmimport \
+                        --policy-document "file://role-policy.json"
+
+ 
+ Now create the file for metadata called file2.json
  
     # file2.json
    echo '[
@@ -56,9 +96,11 @@
 
  # in the above script bucketname and vm_image_name are defined as global variables
    
- 9. aws ec2 import-image --description "<any for the image>" --disk-containers "file2.json"
+ 9. aws ec2 import-image --description "<any for the image>" --disk-containers "file://file2.json"
     # image start importing
     # expected outcome
+    # if it prompts any error regarding permission just attach vmimport policy (kind of mandatory)
+    
     {
     "Description": "your description",
     "ImportTaskId": "import-ami-08142795085",
@@ -81,9 +123,6 @@
  10. if you want to check the staus of importing image
  
      # command : aws ec2 describe-import-image-tasks --import-task-ids "import-ami-08142795085"
-
-
-
 
 11. Once you launch the VM, you can login using the same uid/password you used onpremise. 
     
