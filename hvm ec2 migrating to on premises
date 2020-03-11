@@ -41,3 +41,11 @@ aws ec2 describe-export-image-tasks --export-image-task-ids export-ami-<your tas
 
 Any chances to abort
 aws ec2 cancel-export-task --export-task-id export-ami-<your task id>
+
+
+
+
+References
+
+
+https://docs.aws.amazon.com/vm-import/latest/userguide/what-is-vmimport.html
