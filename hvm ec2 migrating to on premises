@@ -1,0 +1,44 @@
+Go to ec2 console and select actions -> create image 
+
+Go to ami and pick the image ami-id
+
+create a file called trust-policy.json
+# cat > "trust-policy.json" << "EOF"
+{
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Effect": "Allow",
+         "Principal": { "Service": "vmie.amazonaws.com" },
+         "Action": "sts:AssumeRole",
+         "Condition": {
+            "StringEquals":{
+               "sts:Externalid": "vmimport"
+            }
+         }
+      }
+   ]
+}
+EOF
+
+
+Aws iam create-role --role-name vmimport --assume-role-policy-document "file://trust-policy.json"
+ # fire up the above command 
+ # by default this looks for the name vmimport please create with the same "vmimport"
+ 
+Create the policy and attach to the vmimport role
+ # 
+ 
+Time to create the exporting vm to s3
+aws ec2 export-image --image-id ami-<copy and paste id> --disk-image-format VMDK --s3-export-location S3Bucket=bucketname
+
+# try to assign the vmexport policy till that cant achieve this process
+# after assigning you will get the task id
+
+
+Monitor the process
+aws ec2 describe-export-image-tasks --export-image-task-ids export-ami-<your task id> 
+
+
+Any chances to abort
+aws ec2 cancel-export-task --export-task-id export-ami-<your task id>
